@@ -43,6 +43,10 @@ and this paper:
 }
 ```
 
+The package contains others centrality measure like:
+* [HITS](https://en.wikipedia.org/wiki/HITS_algorithm)
+* [PageRank](https://en.wikipedia.org/wiki/PageRank)
+
  **Have Fun!**
 
 
