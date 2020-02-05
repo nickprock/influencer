@@ -4,7 +4,7 @@ Created on Wed Feb  5 15:02:07 2020
 @author: nico
 """
 
-import numpy as np
+import jax.numpy as np
 
 def hits(adjMatrix, p: int = 100):
     n = adjMatrix.shape[0]
@@ -33,3 +33,55 @@ def hits(adjMatrix, p: int = 100):
         hub[str(i)] = h[-1,i]
     
     return hub, authority, h, a
+
+
+def tophits(T, epsilon: float = 0.001):
+    
+    u, v, w = np.empty([1,T.shape[0]]), np.empty([1,T.shape[1]]), np.empty([1,T.shape[2]])
+    sigma = []
+
+    x = np.ones((T.shape[0], 1))
+    y = np.ones((T.shape[1], 1))
+    z = np.ones((T.shape[2], 1))
+    
+    tx = np.squeeze(x)
+    ty = np.squeeze(y)
+    tz = np.squeeze(z)
+    
+    lambda0=100
+    continua=True
+    num=1
+    
+    while(continua):
+        x1 = np.tensordot(T,ty,axes=([1],[0]))
+        x = np.squeeze(np.tensordot(x1,tz,axes=([1],[0])))
+        
+        y1 = np.tensordot(T,x,axes=([0],[0]))
+        y = np.squeeze(np.tensordot(y1,tz,axes=([1], [0])))
+        
+        z1 = np.tensordot(T,x,axes=([0],[0]))
+        z = np.squeeze(np.tensordot(z1,y,axes=([0],[0])))
+        
+        tx=x/np.linalg.norm(x)
+        ty=y/np.linalg.norm(y)
+        tz=z/np.linalg.norm(z)
+        
+        lambda1 = np.linalg.norm(tx)*np.linalg.norm(ty)*np.linalg.norm(tz)
+        
+        if(abs(lambda1-lambda0) < epsilon):
+            continua=False
+        
+        lambda0 = lambda1
+        num = num+1
+    
+    u = np.vstack((u,tx))
+    v = np.vstack((v,ty))
+    w = np.vstack((w,tz))
+    
+    sigma.append(lambda1)
+    
+    u = u[1:,:]
+    v = v[1:,:]
+    w = w[1:,:]
+
+    return u, v, w
