@@ -4,9 +4,13 @@ Created on Wed Feb  5 15:02:07 2020
 @author: nico
 """
 
-import jax.numpy as np
-
-def hits(adjMatrix, p: int = 100):
+def hits(adjMatrix, p: int = 100, cpu: bool = False):
+    
+    if (cpu):
+        import numpy as np
+    else:
+        import jax.numpy as np
+    
     n = adjMatrix.shape[0]
     
     a = np.ones([1,n])
@@ -35,7 +39,12 @@ def hits(adjMatrix, p: int = 100):
     return hub, authority, h, a
 
 
-def tophits(T, epsilon: float = 0.001):
+def tophits(T, epsilon: float = 0.001, cpu: bool = False):
+    
+    if (cpu):
+        import numpy as np
+    else:
+        import jax.numpy as np
     
     u, v, w = np.empty([1,T.shape[0]]), np.empty([1,T.shape[1]]), np.empty([1,T.shape[2]])
     sigma = []
