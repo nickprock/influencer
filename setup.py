@@ -10,5 +10,5 @@ setup(
    author='Nicola Procopio',
    url="https://github.com/nickprock/",
    packages=['influencer-centrality'],  #same as name
-   install_requires=['numpy'], #external packages as dependencies
+   install_requires=['numpy', 'jax', 'jaxlib'], #external packages as dependencies
 )
