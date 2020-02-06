@@ -4,9 +4,9 @@ Created on Wed Feb  5 15:02:07 2020
 @author: nico
 """
 
-def hits(adjMatrix, p: int = 100, cpu: bool = False):
+def hits(adjMatrix, p: int = 100, np: bool = True):
     
-    if (cpu):
+    if (np):
         import numpy as np
     else:
         import jax.numpy as np
@@ -39,9 +39,9 @@ def hits(adjMatrix, p: int = 100, cpu: bool = False):
     return hub, authority, h, a
 
 
-def tophits(T, epsilon: float = 0.001, cpu: bool = False):
+def tophits(T, epsilon: float = 0.001, np: bool = False):
     
-    if (cpu):
+    if (np):
         import numpy as np
     else:
         import jax.numpy as np

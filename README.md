@@ -6,7 +6,7 @@ In this paper, the authors propose a method capable to find influential users by
 
 The [full paper](http://staff.icar.cnr.it/pizzuti/pubblicazioni/IEEETM2017.pdf) and [other materials](http://staff.icar.cnr.it/pizzuti/codice/SocialAU/readme.html) are avaible on [*ICAR-CNR*](https://www.icar.cnr.it/) website.
 
-I try to develop an algorithm like **SocialAU** using [**JAX**](https://github.com/google/jax) for calculations between tensors.
+I try to develop an algorithm like **SocialAU** using [**JAX**](https://github.com/google/jax) and [**NumPy**]() for calculations between tensors.
 
 <br>
 
@@ -51,9 +51,12 @@ The package contains others centrality measure like:
 
 ## Test
 
-I tested the performance about **JAX** on [Google Colab](https://colab.research.google.com/drive/1c7CFyuKYpV8Ngf5RrUAyp1DZf-qYiQVv). At the moment numpy work better than JAX but I may have made some mistakes. Please report it in the issues.
+I tested the performance about **JAX** on [Google Colab](https://colab.research.google.com/drive/1c7CFyuKYpV8Ngf5RrUAyp1DZf-qYiQVv).
 
-**All algorithms allow you to choose whether to use the CPU (numpy) or GPU / TPU (jax.numpy).**
+At the moment numpy work better than JAX but I may have made some mistakes (the reason could be [this](https://stackoverflow.com/questions/51177788/cupy-is-slower-than-numpy)). **Please report it in the issues.**
+
+
+**All algorithms allow you to choose whether to use numpy or jax.numpy.**
 
 ## Links
 
