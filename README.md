@@ -53,6 +53,8 @@ The package contains others centrality measure like:
 
 I tested the performance about **JAX** on [Google Colab](https://colab.research.google.com/drive/1c7CFyuKYpV8Ngf5RrUAyp1DZf-qYiQVv). At the moment numpy work better than JAX but I may have made some mistakes. Please report it in the issues.
 
+**All algorithms allow you to choose whether to use the CPU (numpy) or GPU / TPU (jax.numpy).**
+
 ## Links
 
 * [JAX, aka NumPy on steroids](https://iaml.it/blog/jax-intro-english)
