@@ -18,6 +18,20 @@ I try to develop an algorithm like **SocialAU** using [**JAX**](https://github.c
 
 <br>
 
+## Installation
+
+1. Clone or download .zip and unzip
+2. Using terminal go into the folder with setup.py
+3. Digit the following command
+```
+python setup.py install
+```
+4. Try
+```
+import influencer
+influencer.__version__
+```
+
 ## Citation
 
 If you use my code in your research, please cite this project:
@@ -53,10 +67,12 @@ The package contains others centrality measure like:
 
 I tested the performance about **JAX** on [Google Colab](https://colab.research.google.com/drive/1c7CFyuKYpV8Ngf5RrUAyp1DZf-qYiQVv).
 
-At the moment numpy work better than JAX but I may have made some mistakes (the reason could be [this](https://stackoverflow.com/questions/51177788/cupy-is-slower-than-numpy)). **Please report it in the issues.**
+At the moment numpy work better than JAX but I may have made some mistakes (the reason could be [this](https://stackoverflow.com/questions/51177788/cupy-is-slower-than-numpy)).
+
+**Please report it in the issues.**
 
 
-**The library allows you to use both versions.**
+**The library allows you to use only numpy versions beacuse [JAX is not avaible for Windows](https://github.com/google/jax#installation), but the script is into *lazy_centrality.py*. **
 
 ## Links
 
