@@ -72,7 +72,7 @@ At the moment numpy work better than JAX but I may have made some mistakes (the 
 **Please report it in the issues.**
 
 
-**The library allows you to use only numpy versions beacuse [JAX is not avaible for Windows](https://github.com/google/jax#installation), but the script is into *lazy_centrality.py*. **
+**The library allows you to use only numpy versions beacuse [JAX is not avaible for Windows](https://github.com/google/jax#installation), but the script is into *lazy_centrality.py***
 
 ## Links
 
