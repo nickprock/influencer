@@ -3,13 +3,9 @@ Created on Wed Feb  5 15:02:07 2020
 
 @author: nico
 """
+import numpy as np
 
-def hits(adjMatrix, p: int = 100, np: bool = True):
-    
-    if (np):
-        import numpy as np
-    else:
-        import jax.numpy as np
+def hits(adjMatrix, p: int = 100):
     
     n = adjMatrix.shape[0]
     
@@ -40,11 +36,6 @@ def hits(adjMatrix, p: int = 100, np: bool = True):
 
 
 def tophits(T, epsilon: float = 0.001, np: bool = False):
-    
-    if (np):
-        import numpy as np
-    else:
-        import jax.numpy as np
     
     u, v, w = np.empty([1,T.shape[0]]), np.empty([1,T.shape[1]]), np.empty([1,T.shape[2]])
     sigma = []
