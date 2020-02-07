@@ -56,7 +56,7 @@ I tested the performance about **JAX** on [Google Colab](https://colab.research.
 At the moment numpy work better than JAX but I may have made some mistakes (the reason could be [this](https://stackoverflow.com/questions/51177788/cupy-is-slower-than-numpy)). **Please report it in the issues.**
 
 
-**All algorithms allow you to choose whether to use numpy or jax.numpy.**
+**The library allows you to use both versions.**
 
 ## Links
 
