@@ -1,11 +1,39 @@
 """
-Created on Wed Feb  5 15:02:07 2020
+Created on Fri Nov  29 20:02:07 2019
 
 @author: nico
 """
 import numpy as np
 
 def hits(adjMatrix, p: int = 100):
+	"""
+	Calculate the hub and authority score in a net
+
+	Parameters
+	-------------------
+	adjMatrix: a numpy array NxN.
+
+	p: int. Default 100. The max iteration.
+
+	Returns
+	-------------------
+	hub: dict. The hub score for each node in the net.
+	authority: dict. The authority score for each node in the net.
+	h: numpy array Nxp. (Optional). The hub score for each node in the net for each algorithm's step.
+	a: numpy array Nxp. (Optional). The authority score for each node in the net for each algorithm's step.
+
+	Example
+	-------------------
+	>> import numpy as np
+	>> from influencer.centrality import hits
+
+	Create an adjiacency matrix with numpy
+
+	>> adjM = np.random.rand(10, 10)
+	>> adjM[adjM>0.5]=1
+	>> adjM[adjM<=0.5]=0
+	>> hub, aut, _, _ = hits(adjMatrix = adjM)
+	"""
     
     n = adjMatrix.shape[0]
     
@@ -36,7 +64,31 @@ def hits(adjMatrix, p: int = 100):
 
 
 def tophits(T, epsilon: float = 0.001):
-    
+    """
+    Calculate the TOPHITS score for 3D tensor.
+
+    Parameters
+	-------------------
+	T: a numpy array NxMxQ.
+	epsilon: float. Default 0.001. Stop criteria. If the labda value converge (|lambda(t-1) - labda(t)| < epsilon) stop the execution.
+
+	Returns
+	-------------------
+	u, v, w: numpy array. The TOPHITS scores for each node about, respectively, the first, second and third dimension of tensor T.
+
+	Example
+	-------------------
+	>> import numpy as np
+	>> from influencer.centrality import tophits
+
+	Create a 3D tensor in numpy
+
+	>> ten = np.random.rand(10,5,20)
+	>> ten[ten>0.5]=1
+	>> ten[ten<=0.5]=0
+	>> d1, d2, d3 = tophits(T=ten)
+    """
+
     u, v, w = np.empty([1,T.shape[0]]), np.empty([1,T.shape[1]]), np.empty([1,T.shape[2]])
     sigma = []
 
@@ -86,16 +138,46 @@ def tophits(T, epsilon: float = 0.001):
 
     return u, v, w
 
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb  7 16:14:54 2020
-
-@author: integris
-"""
-
-import numpy as np
 
 def socialAU(mu, mi, mw, T, epsilon: float = 0.001):
+	"""
+	Calculate the socialAU score in a 3 layer net and detect the influencer. For more information consult the README.
+
+	Parameters
+	-------------------
+	mu, mi, mw: numpy array. These are 3 adjiacency matrix with dimension NxN, MxM, QxQ.
+	T: numpy array. A 3D tensor with dimension NxMxQ.
+	epsilon: float. Default 0.001. Stop criteria. If the labda value converge (|lambda(t-1) - labda(t)| < epsilon) stop the execution.
+
+	Returns
+	-------------------
+	u, v, w: numpy array. The socialAU scores for each node about, respectively, the first, second and third dimension of tensor (3 social networks).
+
+	Example
+	-------------------
+	>> import numpy as np
+	>> from influencer.centrality import socialAU
+
+	Create 3 adjiacency matrix
+	>> userNet = np.random.rand(10, 10)
+	>> userNet[userNet>0.5]=1
+	>> userNet[userNet<=0.5]=0
+	>> itemNet = np.random.rand(5, 5)
+	>> itemNet[itemNet>0.5]=1
+	>> itemNet[itemNet<=0.5]=0
+	>> wordNet = np.random.rand(20, 20)
+	>> wordNet[wordNet>0.5]=1
+	>> wordNet[wordNet<=0.5]=0
+
+	Create a 3D tensor in numpy
+
+	>> ten = np.random.rand(10,5,20)
+	>> ten[ten>0.5]=1
+	>> ten[ten<=0.5]=0
+
+	>> user, item, word = socialAU(userNet, itemNet, wordNet,ten)
+	"""
+
     u, v, w = np.empty([1,T.shape[0]]), np.empty([1,T.shape[1]]), np.empty([1,T.shape[2]])
     
     x=np.ones((T.shape[0],1))
@@ -207,10 +289,8 @@ def socialAU(mu, mi, mw, T, epsilon: float = 0.001):
     v = np.vstack((v,ty))
     w = np.vstack((w,tz))
     
-    sigma = lambda1
-    
     u = u[1:,:]
     v = v[1:,:]
     w = w[1:,:]
     
-    return u, v, w, sigma
+    return u, v, w
