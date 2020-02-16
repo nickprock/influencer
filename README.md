@@ -83,7 +83,8 @@ At the moment numpy work better than JAX but I may have made some mistakes (the 
 
  **Have Fun!**
 
-
+License
 ---
+The code present in this project is licensed under the MIT License.
 
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licenza Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />Quest'opera è distribuita con Licenza <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribuzione 4.0 Internazionale</a>.
