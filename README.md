@@ -39,7 +39,7 @@ If you use my code in your research, please cite this project:
 @misc{influencer-centrality,
   author =       {Nicola Procopio,
   title =        {Influencer Centrality},
-  howpublished = {\url{https://github.com/nickprock/influencer-centrality}},
+  howpublished = {\url{https://github.com/nickprock/influencer}},
   year =         {2020}
 }
 ```
