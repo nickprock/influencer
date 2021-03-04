@@ -40,7 +40,7 @@ def hits(adjMatrix, p: int = 100):
     a = np.ones([1,n])
     h = np.ones([1,n])
     
-    pa=a
+    pa = a
     #ph=h
     
     authority = {}
