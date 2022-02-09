@@ -41,7 +41,7 @@ def hits(adjMatrix, p: int = 100, device = 0):
   >> hub, aut, _, _ = hits(adjMatrix = MT)
   """
 
-  if ~torch.cuda.is_available():
+  if not torch.cuda.is_available():
     device = "cpu"
     print("GPU not available")
 	
