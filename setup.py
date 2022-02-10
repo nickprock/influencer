@@ -11,5 +11,5 @@ setup(
    url="https://github.com/nickprock/",
    packages=['influencer'],  #same as name
    # install_requires=['numpy', 'jax'],
-   install_requires=['numpy'], #external packages as dependencies
+   install_requires=['numpy', 'torch'], #external packages as dependencies
 )
