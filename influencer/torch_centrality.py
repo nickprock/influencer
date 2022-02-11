@@ -105,22 +105,22 @@ def tophits(T, epsilon: float = 0.001, device = 0):
     y = torch.ones((T.shape[1], 1)).to(device)
     z = torch.ones((T.shape[2], 1)).to(device)
     
-    tx = torch.squeeze(x).to(device)
-    ty = torch.squeeze(y).to(device)
-    tz = torch.squeeze(z).to(device)
+    tx = torch.squeeze(x)
+    ty = torch.squeeze(y)
+    tz = torch.squeeze(z)
 
     lambda0=100
     continua=True
     num=1
 
     while(continua):
-        x1 = torch.tensordot(T,ty, dims= ([1],[0])).to(device)
+        x1 = torch.tensordot(T,ty, dims= ([1],[0]))
         x = torch.squeeze(torch.tensordot(x1,tz,dims=([1],[0])))
         
-        y1 = torch.tensordot(T,x,dims=([0],[0])).to(device)
+        y1 = torch.tensordot(T,x,dims=([0],[0]))
         y = torch.squeeze(torch.tensordot(y1,tz,dims=([1], [0])))
         
-        z1 = torch.tensordot(T,x,dims=([0],[0])).to(device)
+        z1 = torch.tensordot(T,x,dims=([0],[0]))
         z = torch.squeeze(torch.tensordot(z1,y,dims=([0],[0])))
         
         tx=x/torch.linalg.norm(x)

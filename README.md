@@ -20,6 +20,16 @@ I try to develop an algorithm like **SocialAU** using [**JAX**](https://github.c
 
 ## Installation
 
+### Dependencies
+
+```
+* Python >= 3.8.5
+* Numpy >= 1.20
+* PyTorch >= 1.10.2
+```
+
+### User Installation
+
 1. Clone or download .zip and unzip
 2. Using terminal go into the folder with setup.py
 3. Digit the following command
@@ -32,6 +42,14 @@ import influencer
 influencer.__version__
 ```
 
+**or**
+
+```
+sudo apt install git
+
+pip install git+https://github.com/nickprock/influencer.git@main
+
+```
 ## Citation
 
 If you use my code in your research, please cite this project:
@@ -65,7 +83,7 @@ The package contains others centrality measure like:
 
 ## Test
 
-I tested the performance about **JAX** on [Google Colab](https://colab.research.google.com/drive/1c7CFyuKYpV8Ngf5RrUAyp1DZf-qYiQVv).
+I tested the performance about **JAX**  [here on Google Colab](https://colab.research.google.com/drive/1c7CFyuKYpV8Ngf5RrUAyp1DZf-qYiQVv) and **JAX** vs **Numpy** vs **PyTorch** on *HITS* algorithm [here on Google Colab](https://colab.research.google.com/drive/1q4hpkp1Wqb7qEZIY6_EgHBaOt5E3zp6i?usp=sharing)
 
 At the moment numpy work better than JAX but I may have made some mistakes (the reason could be [this](https://stackoverflow.com/questions/51177788/cupy-is-slower-than-numpy)).
 
