@@ -83,7 +83,22 @@ The package contains others centrality measure like:
 
 ## Test
 
-I tested the performance about **JAX**  [here on Google Colab](https://colab.research.google.com/drive/1c7CFyuKYpV8Ngf5RrUAyp1DZf-qYiQVv) and **JAX** vs **Numpy** vs **PyTorch** on *HITS* algorithm [here on Google Colab](https://colab.research.google.com/drive/1q4hpkp1Wqb7qEZIY6_EgHBaOt5E3zp6i?usp=sharing)
+I tested the performance about **JAX** vs **Numpy** vs **PyTorch** on *HITS* algorithm [here on Google Colab](https://colab.research.google.com/drive/1q4hpkp1Wqb7qEZIY6_EgHBaOt5E3zp6i?usp=sharing).
+
+<br>
+
+![exe_time](https://github.com/nickprock/influencer/blob/master/img/exeTime.png)
+
+<br>
+
+The focus on ***Numpy vs PyTorch*** 
+
+<br>
+
+![focus_on](https://github.com/nickprock/influencer/blob/master/img/focus.png)
+
+<br>
+
 
 At the moment numpy work better than JAX but I may have made some mistakes (the reason could be [this](https://stackoverflow.com/questions/51177788/cupy-is-slower-than-numpy)).
 
