@@ -6,7 +6,7 @@ In this paper, the authors propose a method capable to find influential users by
 
 The [full paper](http://staff.icar.cnr.it/pizzuti/pubblicazioni/IEEETM2017.pdf) and [other materials](http://staff.icar.cnr.it/pizzuti/codice/SocialAU/readme.html) are avaible on [*ICAR-CNR*](https://www.icar.cnr.it/) website.
 
-I try to develop an algorithm like **SocialAU** using [**JAX**](https://github.com/google/jax) and [**NumPy**]() for calculations between tensors.
+I try to develop an algorithm like **SocialAU** using [**JAX**](https://github.com/google/jax), [**PyTorch**](https://pytorch.org/) and [**NumPy**](https://numpy.org/) for calculations between tensors.
 
 <br>
 
