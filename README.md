@@ -47,7 +47,7 @@ influencer.__version__
 ```
 sudo apt install git
 
-pip install git+https://github.com/nickprock/influencer.git@main
+pip install git+https://github.com/nickprock/influencer.git
 
 ```
 ## Citation
@@ -84,6 +84,7 @@ The package contains others centrality measure like:
 ## Test
 
 I tested the performance about **JAX** vs **Numpy** vs **PyTorch** on *HITS* algorithm [here on Google Colab](https://colab.research.google.com/drive/1q4hpkp1Wqb7qEZIY6_EgHBaOt5E3zp6i?usp=sharing).
+Other tests are available in [notebook directory](https://github.com/nickprock/influencer/tree/master/notebook).
 
 <br>
 
@@ -101,6 +102,7 @@ The focus on ***Numpy vs PyTorch***
 
 
 At the moment numpy work better than JAX but I may have made some mistakes (the reason could be [this](https://stackoverflow.com/questions/51177788/cupy-is-slower-than-numpy)).
+PyTorch is the best implementation, in socialAU works fine up to 10^9 nodes, runtime broke down with a tensor of about 5B nodes. Numpy stops at 10^8 nodes.
 
 **Please report it in the issues.**
 
