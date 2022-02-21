@@ -79,7 +79,6 @@ and this paper:
 
 The package contains others centrality measure like:
 * [HITS and TOPHITS](https://en.wikipedia.org/wiki/HITS_algorithm)
-* [PageRank](https://en.wikipedia.org/wiki/PageRank) [not avaible now]
 
 ## Test
 
