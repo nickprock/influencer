@@ -99,6 +99,13 @@ The focus on ***Numpy vs PyTorch***
 
 <br>
 
+Exwcution time in **log10 scale**. 
+
+<br>
+
+![focus_on](https://github.com/nickprock/influencer/blob/master/img/exeTimeLog.png)
+
+<br>
 
 At the moment numpy work better than JAX but I may have made some mistakes (the reason could be [this](https://stackoverflow.com/questions/51177788/cupy-is-slower-than-numpy)).
 PyTorch is the best implementation, in socialAU works fine up to 10^9 nodes, runtime broke down with a tensor of about 5B nodes. Numpy stops at 10^8 nodes.
