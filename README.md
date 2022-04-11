@@ -99,7 +99,7 @@ The focus on ***Numpy vs PyTorch***
 
 <br>
 
-Exwcution time in **log10 scale**. 
+Execution time in **log10 scale**. 
 
 <br>
 
