@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Procopio"
+  given-names: "Nicola"
+  orcid: "https://orcid.org/0000-0001-7277-8880"
+title: "Influencer Centrality"
+version: 0.2.0
+date-released: 2022-02-12
+url: "https://github.com/nickprock/influencer"
