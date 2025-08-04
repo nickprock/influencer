@@ -1,12 +1,12 @@
 # Influencer Centrality
 
-The algorithm in this package is inspired about the paper **"Detecting Topic Authoritative Social Media Users: a
-Multilayer Network Approach"**.
-In this paper, the authors propose a method capable to find influential users by exploiting the contents of the messages posted by them to express opinions on items, by modeling these contents with a three-layer network.
+The algorithm in this package is inspired by the paper **"Detecting Topic Authoritative Social Media Users: a Multilayer Network Approach"**.
 
-The [full paper](http://staff.icar.cnr.it/pizzuti/pubblicazioni/IEEETM2017.pdf) and [other materials](http://staff.icar.cnr.it/pizzuti/codice/SocialAU/readme.html) are avaible on [*ICAR-CNR*](https://www.icar.cnr.it/) website.
+In this paper, the authors propose a method capable of finding influential users by exploiting the contents of the messages posted by them to express opinions on items, by modeling these contents with a three-layer network.
 
-I try to develop an algorithm like **SocialAU** using [**JAX**](https://github.com/google/jax), [**PyTorch**](https://pytorch.org/) and [**NumPy**](https://numpy.org/) for calculations between tensors.
+The [full paper](http://staff.icar.cnr.it/pizzuti/pubblicazioni/IEEETM2017.pdf) and [other materials](http://staff.icar.cnr.it/pizzuti/codice/SocialAU/readme.html) are available on [*ICAR-CNR*](https://www.icar.cnr.it/) website.
+
+This package provides a PyTorch-based implementation of the **SocialAU** algorithm for efficient tensor calculations.
 
 <br>
 
@@ -24,45 +24,84 @@ I try to develop an algorithm like **SocialAU** using [**JAX**](https://github.c
 
 ```
 * Python >= 3.8.5
-* Numpy >= 1.20
 * PyTorch >= 1.10.2
+* NumPy >= 1.20
 ```
 
 ### User Installation
 
+**Option 1: Clone and install locally**
 1. Clone or download .zip and unzip
 2. Using terminal go into the folder with setup.py
-3. Digit the following command
-```
+3. Run the following command:
+```bash
 python setup.py install
 ```
-4. Try
-```
+4. Test the installation:
+```python
 import influencer
-influencer.__version__
+print(influencer.__version__)
 ```
 
-**or**
-
-```
-sudo apt install git
-
+**Option 2: Install from GitHub**
+```bash
 pip install git+https://github.com/nickprock/influencer.git
-
 ```
+
+## Current Implementation
+
+The current main branch contains a stable PyTorch-based implementation focused on:
+- **SocialAU algorithm** for detecting influential users
+- **HITS and TOPHITS** centrality measures
+- Comprehensive test suite
+- Optimized performance for large-scale networks
+
+### Experimental Features
+
+For experimental features including JAX and NumPy implementations, please check the `experimental` branch:
+```bash
+git clone https://github.com/nickprock/influencer.git
+git checkout experimental
+```
+
+## Features
+
+The package includes the following centrality measures:
+* **SocialAU**: Multi-layer network approach for topic-authoritative user detection
+* **[HITS and TOPHITS](https://en.wikipedia.org/wiki/HITS_algorithm)**: Hub and Authority scoring algorithms
+
+## Performance
+
+The PyTorch implementation provides excellent performance characteristics:
+- **Scalability**: Works efficiently up to 10^9 nodes
+- **Memory efficiency**: Optimized tensor operations
+- **Cross-platform compatibility**: Works on Windows, Linux, and macOS
+
+For detailed performance comparisons between different implementations (JAX, NumPy, PyTorch), refer to the `experimental` branch and the [Google Colab notebook](https://colab.research.google.com/drive/1q4hpkp1Wqb7qEZIY6_EgHBaOt5E3zp6i?usp=sharing).
+
+Additional tests and examples are available in the [notebook directory](https://github.com/nickprock/influencer/tree/master/notebook).
+
+## Testing
+
+The package includes a comprehensive test suite to ensure reliability and correctness of the algorithms. Run tests with:
+```bash
+python -m pytest tests/
+```
+
 ## Citation
 
-If you use my code in your research, please cite this project:
-```
+If you use this code in your research, please cite this project:
+```bibtex
 @misc{influencer-centrality,
-  author =       {Nicola Procopio,
-  title =        {Influencer Centrality},
+  author = {Nicola Procopio},
+  title = {Influencer Centrality},
   howpublished = {\url{https://github.com/nickprock/influencer}},
-  year =         {2020}
+  year = {2020}
 }
 ```
-and this paper:
-```
+
+and the original paper:
+```bibtex
 @article{oro2017detecting,
   title={Detecting topic authoritative social media users: a multilayer network approach},
   author={Oro, Ermelinda and Pizzuti, Clara and Procopio, Nicola and Ruffolo, Massimo},
@@ -75,57 +114,22 @@ and this paper:
 }
 ```
 
-## Other Functions
+## Contributing
 
-The package contains others centrality measure like:
-* [HITS and TOPHITS](https://en.wikipedia.org/wiki/HITS_algorithm)
+Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests.
 
-## Test
-
-I tested the performance about **JAX** vs **Numpy** vs **PyTorch** on *HITS* algorithm [here on Google Colab](https://colab.research.google.com/drive/1q4hpkp1Wqb7qEZIY6_EgHBaOt5E3zp6i?usp=sharing).
-Other tests are available in [notebook directory](https://github.com/nickprock/influencer/tree/master/notebook).
-
-<br>
-
-![exe_time](https://github.com/nickprock/influencer/blob/master/img/exeTime.png)
-
-<br>
-
-The focus on ***Numpy vs PyTorch*** 
-
-<br>
-
-![focus_on](https://github.com/nickprock/influencer/blob/master/img/focus.png)
-
-<br>
-
-Execution time in **log10 scale**. 
-
-<br>
-
-![focus_on](https://github.com/nickprock/influencer/blob/master/img/exeTimeLog.png)
-
-<br>
-
-At the moment numpy work better than JAX but I may have made some mistakes (the reason could be [this](https://stackoverflow.com/questions/51177788/cupy-is-slower-than-numpy)).
-PyTorch is the best implementation, in socialAU works fine up to 10^9 nodes, runtime broke down with a tensor of about 5B nodes. Numpy stops at 10^8 nodes.
-
-**Please report it in the issues.**
-
-
-**The library allows you to use only numpy versions beacuse [JAX is not avaible for Windows](https://github.com/google/jax#installation), but the script is into *lazy_centrality.py***
+For experimental features or alternative implementations, consider contributing to the `experimental` branch.
 
 ## Links
 
 * [JAX, aka NumPy on steroids](https://iaml.it/blog/jax-intro-english)
-* [Google researchers introduce JAX: ...](https://hub.packtpub.com/google-researchers-introduce-jax-a-tensorflow-like-framework-for-generating-high-performance-code-from-python-and-numpy-machine-learning-programs/)
+* [Google researchers introduce JAX](https://hub.packtpub.com/google-researchers-introduce-jax-a-tensorflow-like-framework-for-generating-high-performance-code-from-python-and-numpy-machine-learning-programs/)
 * [You don't know JAX](https://colinraffel.com/blog/you-don-t-know-jax.html)
 
+**Have Fun!**
 
- **Have Fun!**
+## License
 
-License
----
 The code present in this project is licensed under the MIT License.
 
-<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licenza Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />Quest'opera è distribuita con Licenza <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribuzione 4.0 Internazionale</a>.
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution 4.0 International License</a>.
