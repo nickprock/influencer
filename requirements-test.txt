@@ -1,0 +1,32 @@
+# Include all production requirements
+-r requirements.txt
+
+# Testing framework
+pytest>=7.0.0,<8.0.0
+
+# Test coverage
+pytest-cov>=4.0.0,<5.0.0
+
+# Advanced testing features
+pytest-xdist>=3.0.0,<4.0.0  # Parallel test execution
+pytest-mock>=3.10.0,<4.0.0   # Enhanced mocking capabilities
+
+# Performance testing (optional)
+pytest-benchmark>=4.0.0,<5.0.0
+
+# Test reporting
+pytest-html>=3.1.0,<4.0.0    # HTML test reports
+
+# Code quality tools (optional but recommended)
+flake8>=5.0.0,<7.0.0         # Code linting
+black>=22.0.0,<24.0.0        # Code formatting
+isort>=5.10.0,<6.0.0         # Import sorting
+
+# Type checking (optional)
+mypy>=1.0.0,<2.0.0
+
+# Memory profiling for performance tests (optional)
+memory-profiler>=0.60.0,<1.0.0
+
+# For generating test data
+hypothesis>=6.70.0,<7.0.0    # Property-based testing
