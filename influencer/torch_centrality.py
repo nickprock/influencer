@@ -1,322 +1,248 @@
 """
 Created on Fri Jan  28 09:56:07 2022
-Last update on Sat Feb 12 15:30:22 2022
+Last update on Sun Aug 03 15:02:36 2025
 
 @author: nico
 """
 
 import torch
 
-def hits(adjMatrix, p: int = 100, device = 0):
-  """
-  Calculate the hub and authority score in a net
+def safe_normalize(vec: torch.Tensor) -> torch.Tensor:
+    norm = torch.linalg.norm(vec)
+    return vec / norm if norm > 0 else torch.zeros_like(vec)
 
-  Parameters
-  -------------------
-  adjMatrix: a torch tensor NxN.
-
-  p: int. Default 100. The max iteration.
-
-  device: Default 0. Set the GPU. If GPU is not available it is set to "cpu" automatically.
-
-  Returns
-  -------------------
-  hub: dict. The hub score for each node in the net.
-  authority: dict. The authority score for each node in the net.
-  h: torch tensor Nxp. (Optional). The hub score for each node in the net for each algorithm's step.
-  a: torch tensor Nxp. (Optional). The authority score for each node in the net for each algorithm's step.
-
-  Example
-  -------------------
-  >> import torch
-  >> import numpy as np
-  >> from influencer.torch_centrality import hits
-
-  Create an adjiacency matrix with numpy
-
-  >> adjM = np.random.rand(10, 10)
-  >> adjM[adjM>0.5]=1
-  >> adjM[adjM<=0.5]=0
-  >> MT = torch.from_numpy(adjM).float().to(0) 
-  >> # .to(0) if GPU is available, test your GPU with torch.cuda.is_available()
-  >> hub, aut, _, _ = hits(adjMatrix = MT)
-  """
-
-  if not torch.cuda.is_available():
-    device = "cpu"
-    print("GPU not available")
-	
-  n = adjMatrix.shape[0]
-  a = torch.ones([1,n]).to(device)
-  h = torch.ones([1,n]).to(device)
-  pa = a
-  authority = {}
-  hub = {}
-
-  for k in range(1,p):
-    h1 = torch.mm(adjMatrix, pa.T)/torch.linalg.norm(torch.mm(adjMatrix, pa.T))
-    a1 = torch.mm(adjMatrix.T, h1)/torch.linalg.norm(torch.mm(adjMatrix.T , h1))
-
-    h = torch.vstack((h,torch.mv(adjMatrix, a[k-1,:].T)/torch.linalg.norm(torch.mv(adjMatrix, a[k-1,:].T))))
-    a = torch.vstack((a,torch.mv(adjMatrix.T, h[k,:].T)/torch.linalg.norm(torch.mv(adjMatrix.T, h[k,:].T))))
-
-    pa = a1.T
-
-    for i in range(n):
-      authority[str(i)] = a[-1,i]
-      hub[str(i)] = h[-1,i]
-  return hub, authority, h, a
-
-def tophits(T, epsilon: float = 0.001, device = 0):
+def hits(adjMatrix: torch.Tensor, p: int = 100, device=0):
     """
-    Calculate the TOPHITS score for 3D tensor.
+    Compute HITS (Hub and Authority) scores on a graph represented by an adjacency matrix.
 
     Parameters
-	  -------------------
-	  T: a tensor NxMxQ.
-	  epsilon: float. Default 0.001. Stop criteria. If the labda value converge (|lambda(t-1) - labda(t)| < epsilon) stop the execution.
-    device: Default 0. Set the GPU. If GPU is not available it is set to "cpu" automatically.
+    ----------
+    adjMatrix : torch.Tensor
+        Square adjacency matrix of shape (N, N).
+    p : int, optional
+        Number of iterations to perform (default is 100).
+    device : int or str, optional
+        GPU device ID or "cpu". If GPU is unavailable, it defaults to "cpu".
 
-	  Returns
-	  -------------------
-	  u, v, w: tensors. The TOPHITS scores for each node about, respectively, the first, second and third dimension of tensor T.
-
-	  Example
-	  -------------------
-	  >> import numpy as np
-	  >> from influencer.centrality import tophits
-
-	  Create a 3D tensor in numpy
-
-	  >> ten = np.random.rand(10,5,20)
-	  >> ten[ten>0.5]=1
-	  >> ten[ten<=0.5]=0
-    >> MT = torch.from_numpy(ten).float().to(0) 
-    >> # .to(0) if GPU is available, test your GPU with torch.cuda.is_available()
-	  >> u, v, w = tophits(T=MT)
+    Returns
+    -------
+    hub : dict
+        Final hub scores as a dictionary of node index -> score.
+    authority : dict
+        Final authority scores as a dictionary of node index -> score.
+    h_all : torch.Tensor
+        Hub scores over iterations, shape (p, N).
+    a_all : torch.Tensor
+        Authority scores over iterations, shape (p, N).
     """
 
     if not torch.cuda.is_available():
         device = "cpu"
         print("GPU not available")
 
-    u, v, w = torch.empty([1,T.shape[0]]).to(device), torch.empty([1,T.shape[1]]).to(device), torch.empty([1,T.shape[2]]).to(device)
-    sigma = []
+    device = torch.device(device)
+    n = adjMatrix.shape[0]
 
-    x = torch.ones((T.shape[0], 1)).to(device)
-    y = torch.ones((T.shape[1], 1)).to(device)
-    z = torch.ones((T.shape[2], 1)).to(device)
-    
-    tx = torch.squeeze(x)
-    ty = torch.squeeze(y)
-    tz = torch.squeeze(z)
+    # Initialize scores (iteration 0)
+    h_all = torch.ones((1, n), device=device)
+    a_all = torch.ones((1, n), device=device)
 
-    lambda0=100
-    continua=True
-    num=1
+    # Iterative computation
+    for _ in range(1, p):
+        prev_a = a_all[-1]
+        h_new = safe_normalize(torch.mv(adjMatrix, prev_a))
+        h_all = torch.vstack((h_all, h_new.unsqueeze(0)))
 
-    while(continua):
-        x1 = torch.tensordot(T,ty, dims= ([1],[0]))
-        x = torch.squeeze(torch.tensordot(x1,tz,dims=([1],[0])))
-        
-        y1 = torch.tensordot(T,x,dims=([0],[0]))
-        y = torch.squeeze(torch.tensordot(y1,tz,dims=([1], [0])))
-        
-        z1 = torch.tensordot(T,x,dims=([0],[0]))
-        z = torch.squeeze(torch.tensordot(z1,y,dims=([0],[0])))
-        
-        tx=x/torch.linalg.norm(x)
-        ty=y/torch.linalg.norm(y)
-        tz=z/torch.linalg.norm(z)
-        
-        lambda1 = (torch.linalg.norm(tx)*torch.linalg.norm(ty)*torch.linalg.norm(tz)).item()
-        
-        if(abs(lambda1-lambda0) < epsilon):
-            continua=False
-        
-        lambda0 = lambda1
-        num = num+1
-        
-    
-    u = torch.vstack((u,tx))
-    v = torch.vstack((v,ty))
-    w = torch.vstack((w,tz))
-    
-    sigma.append(lambda1)
-    
-    u = u[1:,:]
-    v = v[1:,:]
-    w = w[1:,:]
+        a_new = safe_normalize(torch.mv(adjMatrix.T, h_new))
+        a_all = torch.vstack((a_all, a_new.unsqueeze(0)))
 
+    # Final hub and authority scores (last iteration)
+    hub = {str(i): h_all[-1, i].item() for i in range(n)}
+    authority = {str(i): a_all[-1, i].item() for i in range(n)}
+
+    return hub, authority, h_all, a_all
+
+import torch
+
+def tophits(T: torch.Tensor, epsilon: float = 1e-3, max_iter: int = 1000, device=0):
+    """
+    Compute TOPHITS scores for a 3D tensor using iterative decomposition.
+
+    Parameters
+    ----------
+    T : torch.Tensor
+        A 3D tensor of shape (N, M, Q).
+    epsilon : float, optional
+        Convergence threshold on lambda difference (default is 1e-3).
+    max_iter : int, optional
+        Maximum number of iterations to prevent infinite loops (default is 1000).
+    device : int or str, optional
+        GPU device ID or "cpu". If GPU is unavailable, it defaults to "cpu".
+
+    Returns
+    -------
+    u : torch.Tensor
+        Score vector for the first dimension (users), shape (N,).
+    v : torch.Tensor
+        Score vector for the second dimension (items), shape (M,).
+    w : torch.Tensor
+        Score vector for the third dimension (keywords), shape (Q,).
+    """
+
+    if not torch.cuda.is_available():
+        device = "cpu"
+        print("GPU not available")
+
+    device = torch.device(device)
+
+    N, M, Q = T.shape
+
+    # Initialize vectors
+    u = torch.ones(N, device=device)
+    v = torch.ones(M, device=device)
+    w = torch.ones(Q, device=device)
+
+    u = u / torch.linalg.norm(u)
+    v = v / torch.linalg.norm(v)
+    w = w / torch.linalg.norm(w)
+
+    lambda_prev = 0.0
+
+    for _ in range(max_iter):
+        # Update u
+        uv = torch.tensordot(T, v, dims=([1], [0]))    # shape: (N, Q)
+        u_new = torch.tensordot(uv, w, dims=([1], [0]))  # shape: (N,)
+        u_new = u_new / torch.linalg.norm(u_new)
+
+        # Update v
+        vt = torch.tensordot(T, u_new, dims=([0], [0]))  # shape: (M, Q)
+        v_new = torch.tensordot(vt, w, dims=([1], [0]))  # shape: (M,)
+        v_new = v_new / torch.linalg.norm(v_new)
+
+        # Update w
+        wt = torch.tensordot(T, u_new, dims=([0], [0]))  # shape: (M, Q)
+        w_new = torch.tensordot(wt, v_new, dims=([0], [0]))  # shape: (Q,)
+        w_new = w_new / torch.linalg.norm(w_new)
+
+        # Check convergence
+        lambda_curr = (
+            torch.linalg.norm(u_new) *
+            torch.linalg.norm(v_new) *
+            torch.linalg.norm(w_new)
+        ).item()
+
+        if abs(lambda_curr - lambda_prev) < epsilon:
+            break
+
+        lambda_prev = lambda_curr
+        u, v, w = u_new, v_new, w_new
 
     return u, v, w
 
+
 def socialAU(mu, mi, mw, T, epsilon: float = 0.001, device = 0):
-  """
-  Calculate the socialAU score in a 3 layer net and detect the influencer. For more information consult the README.
+    """
+    Calculate the socialAU score in a 3 layer net and detect the influencer. 
+    Corrected implementation following the paper's pseudocode exactly.
 
-  Parameters
-  -------------------
-  mu, mi, mw: torch tensor. These are 3 adjiacency matrix with dimension NxN, MxM, QxQ.
-  T: torch tensor. A 3D tensor with dimension NxMxQ.
-  epsilon: float. Default 0.001. Stop criteria. If the labda value converge (|lambda(t-1) - labda(t)| < epsilon) stop the execution.
-  device: Default 0. Set the GPU. If GPU is not available it is set to "cpu" automatically.
+    Parameters
+    -------------------
+    mu, mi, mw: torch tensor. These are 3 adjiacency matrix with dimension NxN, MxM, QxQ.
+    T: torch tensor. A 3D tensor with dimension NxMxQ.
+    epsilon: float. Default 0.001. Stop criteria. If the labda value converge (|lambda(t-1) - labda(t)| < epsilon) stop the execution.
+    device: Default 0. Set the GPU. If GPU is not available it is set to "cpu" automatically.
 
-
-  Returns
-  -------------------
-  u, v, w: torch tensor. The socialAU scores for each node about, respectively, the first, second and third dimension of tensor (3 social networks).
-
-  Example
-  -------------------
-  >> import numpy as np
-  >> import torch
-  >> from influencer.torch_centrality import socialAU
-
-  Create 3 adjiacency matrix
-  >> userNet = np.random.rand(10, 10)
-  >> userNet[userNet>0.5]=1
-  >> userNet[userNet<=0.5]=0
-  >> itemNet = np.random.rand(5, 5)
-  >> itemNet[itemNet>0.5]=1
-  >> itemNet[itemNet<=0.5]=0
-  >> wordNet = np.random.rand(20, 20)
-  >> wordNet[wordNet>0.5]=1
-  >> wordNet[wordNet<=0.5]=0
-
-  Create a 3D tensor in numpy
-
-  >> ten = np.random.rand(10,5,20)
-  >> ten[ten>0.5]=1
-  >> ten[ten<=0.5]=0
-
-  Transorm in tensors
-  >> # .to(0) if GPU is available, test your GPU with torch.cuda.is_available()
-  >> userNet = torch.from_numpy(userNet).float().to(0)
-  >> itemNet = = torch.from_numpy(itemNet).float().to(0)
-  >> wordNet = = torch.from_numpy(wordNet).float().to(0)
-  >> T = torch.from_numpy(ten).float().to(0)
-
-  >> user, item, word = socialAU(userNet, itemNet, wordNet,T)
-  """
-  
-  if not torch.cuda.is_available():
-      device = "cpu"
-      print("GPU not available")
-
-  u, v, w = torch.empty([1,T.shape[0]]).to(device), torch.empty([1,T.shape[1]]).to(device), torch.empty([1,T.shape[2]]).to(device)
+    Returns
+    -------------------
+    u, v, w: torch tensor. The socialAU scores for each node about, respectively, the first, second and third dimension of tensor (3 social networks).
+    """
     
-  x=torch.ones((T.shape[0],1)).to(device)
-  y=torch.ones((T.shape[1],1)).to(device)
-  z=torch.ones((T.shape[2],1)).to(device)
+    if not torch.cuda.is_available():
+        device = "cpu"
+        print("GPU not available")
 
-  tx = torch.squeeze(x).to(device)
-  ty = torch.squeeze(y).to(device)
-  tz = torch.squeeze(z).to(device)
-
-  lambda0=10
-  continua=True
+    # Initialize vectors to unit vectors (step 1 of pseudocode)
+    n, m, r = T.shape[0], T.shape[1], T.shape[2]
     
-  ##########################
-  # user
-  #nU=mu.shape[0]
-  aU=torch.ones([1,mu.shape[0]]).to(device)
-  hU=torch.ones([1,mu.shape[0]]).to(device)
-  paU=aU.clone()
-  phU=hU.clone()
-  #########################
-  # item
-  #nI=mi.shape[0]
-  aI=torch.ones([1,mi.shape[0]]).to(device)
-  hI=torch.ones([1,mi.shape[0]]).to(device)
-  paI=aI.clone()
-  phI=hI.clone()
-  #########################
-  # word
-  # nW=mw.shape[0]
-  aW=torch.ones([1,mw.shape[0]]).to(device)
-  hW=torch.ones([1,mw.shape[0]]).to(device)
-  paW=aW.clone()
-  phW=hW.clone()
-  #########################
-  num=1
-  k=1
+    # For users layer
+    a_U = torch.ones(n).to(device)
+    h_U = torch.ones(n).to(device)
     
-  while (continua):
+    # For items layer  
+    a_I = torch.ones(m).to(device)
+    h_I = torch.ones(m).to(device)
+    
+    # For keywords layer
+    a_k = torch.ones(r).to(device)
+    h_k = torch.ones(r).to(device)
+    
+    # For tensor decomposition
+    h = torch.ones(n).to(device)  # users (first dimension)
+    a = torch.ones(m).to(device)  # items (second dimension)  
+    w = torch.ones(r).to(device)  # keywords (third dimension)
+    
+    # Initialize lambda (step 2)
+    lambda_prev = 0
+    
+    # Main iteration loop (step 3)
+    continua = True
+    
+    while continua:
+        # Step 4-5: HITS for users layer
+        h_U = torch.mv(mu, a_U)
+        a_U = torch.mv(mu.T, h_U)
         
-      # user
-      h1U = torch.mm(mu, paU.T)/torch.linalg.norm(torch.mm(mu, paU.T))
-      a1U = torch.mm(mu.T, h1U)/torch.linalg.norm(torch.mm(mu.T , h1U))
-      hU = torch.vstack((hU,torch.mv(mu, aU[k-1,:].T)/torch.linalg.norm(torch.mv(mu, aU[k-1,:].T))))
-      aU = torch.vstack((aU,torch.mv(mu.T, hU[k,:].T)/torch.linalg.norm(torch.mv(mu.T, hU[k,:].T))))
-      paU = a1U.T
-      phU = h1U.T
+        # Step 6-7: HITS for items layer  
+        h_I = torch.mv(mi, a_I)
+        a_I = torch.mv(mi.T, h_I)
         
-      # item
-      h1I = torch.mm(mi, paI.T)/torch.linalg.norm(torch.mm(mi, paI.T))
-      a1I = torch.mm(mi.T, h1I)/torch.linalg.norm(torch.mm(mi.T , h1I))
-      hI = torch.vstack((hI,torch.mv(mi, aI[k-1,:].T)/torch.linalg.norm(torch.mv(mi, aI[k-1,:].T))))
-      aI = torch.vstack((aI,torch.mv(mi.T, hI[k,:].T)/torch.linalg.norm(torch.mv(mi.T, hI[k,:].T))))
-      paI = a1I.T
-      phI = h1I.T
+        # Step 8-9: HITS for keywords layer
+        h_k = torch.mv(mw, a_k) 
+        a_k = torch.mv(mw.T, h_k)
         
-      # word
-      h1W = torch.mm(mw, paW.T)/torch.linalg.norm(torch.mm(mw, paW.T))
-      a1W = torch.mm(mw.T, h1W)/torch.linalg.norm(torch.mm(mw.T , h1W))
-      hW = torch.vstack((hW,torch.mv(mw, aW[k-1,:].T)/torch.linalg.norm(torch.mv(mw, aW[k-1,:].T))))
-      aW = torch.vstack((aW,torch.mv(mw.T, hW[k,:].T)/torch.linalg.norm(torch.mv(mw.T, hW[k,:].T))))
-      paW = a1W.T
-      phW = h1W.T
+        # Step 10: Update h using tensor operations + HITS scores
+        # h^(t+1) = A ×₂ a^(t) ×₃ w^(t) + h_U^(t+1) + a_U^(t+1)
+        tensor_part = torch.tensordot(T, a, dims=([1], [0]))  # Contract dimension 1 with items
+        tensor_part = torch.tensordot(tensor_part, w, dims=([1], [0]))  # Contract dimension 1 with keywords
+        h = tensor_part + h_U + a_U
         
-      x1 = torch.tensordot(T,ty,dims=([1],[0]))
-      x = torch.squeeze(torch.tensordot(x1,tz,dims=([1],[0])))
-    
-      y1 = torch.tensordot(T,x,dims=([0],[0]))
-      y = torch.squeeze(torch.tensordot(y1,tz,dims=([1], [0])))
-    
-      z1 = torch.tensordot(T,x,dims=([0],[0]))
-      z = torch.squeeze(torch.tensordot(z1,y,dims=([0],[0])))
+        # Step 11: Update a using tensor operations
+        # a^(t+1) = A ×₁ h^(t+1) ×₃ w^(t)
+        tensor_part = torch.tensordot(T, h, dims=([0], [0]))  # Contract dimension 0 with users
+        a = torch.tensordot(tensor_part, w, dims=([1], [0]))  # Contract dimension 1 with keywords
         
-      # user
-      h2U=hU[k,:]
-      a2U=aU[k,:]
-      SNP=(h2U+a2U)
-      SNP=torch.squeeze(SNP.T)
-    
-      # item
-      a2I=aI[k,:]
-      a2I=torch.squeeze(a2I.T)
-    
-      # word
-      a2W=aW[k,:]
-      a2W=torch.squeeze(a2W.T)
+        # Step 12: Update w using tensor operations + HITS scores
+        # w^(t+1) = A ×₁ h^(t+1) ×₂ a^(t) + a_k^(t+1)
+        tensor_part = torch.tensordot(T, h, dims=([0], [0]))  # Contract dimension 0 with users
+        tensor_part = torch.tensordot(tensor_part, a, dims=([0], [0]))  # Contract dimension 0 with items
+        w = tensor_part + a_k
         
-      #################################
-      txx=(x/torch.linalg.norm(x))+SNP
-      tx=txx/torch.linalg.norm(txx)
-    
-      tyy=(y/torch.linalg.norm(y))+a2I
-      ty=tyy/torch.linalg.norm(tyy)
-    
-      tzz=(z/torch.linalg.norm(z))+a2W
-      tz=tzz/torch.linalg.norm(tzz)
-      ################################
+        # Step 13: Calculate lambda = ||h|| ||a|| ||w||
+        lambda_current = torch.linalg.norm(h) * torch.linalg.norm(a) * torch.linalg.norm(w)
         
-      lambda1 = (torch.linalg.norm(tx)*torch.linalg.norm(ty)*torch.linalg.norm(tz)).item()
+        # Step 14: Normalize all vectors
+        h = h / torch.linalg.norm(h)
+        a = a / torch.linalg.norm(a) 
+        w = w / torch.linalg.norm(w)
         
-      if(abs(lambda1-lambda0) < epsilon):
-          continua=False
-            
-      lambda0 = lambda1
-      num+=1
-      k+=1
+        # Normalize HITS vectors for next iteration
+        a_U = a_U / torch.linalg.norm(a_U)
+        h_U = h_U / torch.linalg.norm(h_U)
+        a_I = a_I / torch.linalg.norm(a_I)
+        h_I = h_I / torch.linalg.norm(h_I)
+        a_k = a_k / torch.linalg.norm(a_k)
+        h_k = h_k / torch.linalg.norm(h_k)
+        
+        # Step 15-16: Check convergence
+        if abs(lambda_current - lambda_prev) <= epsilon:
+            continua = False
+        else:
+            lambda_prev = lambda_current
     
-  u = torch.vstack((u,tx))
-  v = torch.vstack((v,ty))
-  w = torch.vstack((w,tz))
+    # Step 19: Return results
+    # Reshape to match original function's output format
+    u = h.unsqueeze(0)  # users scores
+    v = a.unsqueeze(0)  # items scores  
+    w_out = w.unsqueeze(0)  # keywords scores
     
-  u = u[1:,:]
-  v = v[1:,:]
-  w = w[1:,:]
-    
-  return u, v, w
+    return u, v, w_out

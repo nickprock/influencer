@@ -1,293 +1,268 @@
 """
 Created on Fri Nov  29 20:02:07 2019
 
+Last update on Sun Aug 03 15:57:28 2025
+
+
 @author: nico
 """
 import numpy as np
 
+def safe_normalize(vec):
+    """Safe normalization to avoid division by zero"""
+    norm = np.linalg.norm(vec)
+    return vec / norm if norm > 0 else np.zeros_like(vec)
+
 def hits(adjMatrix, p: int = 100):
-  """
-  Calculate the hub and authority score in a net
+    """
+    Calculate the hub and authority score in a net
 
-  Parameters
-  -------------------
-  adjMatrix: a numpy array NxN.
+    Parameters
+    -------------------
+    adjMatrix: a numpy array NxN.
 
-  p: int. Default 100. The max iteration.
+    p: int. Default 100. The max iteration.
 
-  Returns
-  -------------------
-  hub: dict. The hub score for each node in the net.
-  authority: dict. The authority score for each node in the net.
-  h: numpy array Nxp. (Optional). The hub score for each node in the net for each algorithm's step.
-  a: numpy array Nxp. (Optional). The authority score for each node in the net for each algorithm's step.
+    Returns
+    -------------------
+    hub: dict. The hub score for each node in the net.
+    authority: dict. The authority score for each node in the net.
+    h: numpy array pxN. The hub score for each node in the net for each algorithm's step.
+    a: numpy array pxN. The authority score for each node in the net for each algorithm's step.
 
-  Example
-  -------------------
-  >> import numpy as np
-  >> from influencer.centrality import hits
+    Example
+    -------------------
+    >> import numpy as np
+    >> from influencer.centrality import hits
 
-  Create an adjiacency matrix with numpy
+    Create an adjiacency matrix with numpy
 
-  >> adjM = np.random.rand(10, 10)
-  >> adjM[adjM>0.5]=1
-  >> adjM[adjM<=0.5]=0
-  >> hub, aut, _, _ = hits(adjMatrix = adjM)
-  """
+    >> adjM = np.random.rand(10, 10)
+    >> adjM[adjM>0.5]=1
+    >> adjM[adjM<=0.5]=0
+    >> hub, aut, _, _ = hits(adjMatrix = adjM)
+    """
 
-  n = adjMatrix.shape[0]
+    n = adjMatrix.shape[0]
     
-  a = np.ones([1,n])
-  h = np.ones([1,n])
+    # Initialize with ones and normalize
+    h_all = np.ones((1, n))
+    a_all = np.ones((1, n))
     
-  pa = a
+    authority = {}
+    hub = {}
     
-  authority = {}
-  hub = {}
-  for k in range(1,p):
-      h1 = np.dot(adjMatrix, pa.T)/np.linalg.norm(np.dot(adjMatrix, pa.T))
-      a1 = np.dot(adjMatrix.T, h1)/np.linalg.norm(np.dot(adjMatrix.T , h1))
-    
-      h = np.vstack((h,np.dot(adjMatrix, a[k-1,:].T)/np.linalg.norm(np.dot(adjMatrix, a[k-1,:].T))))
-      a = np.vstack((a,np.dot(adjMatrix.T, h[k,:].T)/np.linalg.norm(np.dot(adjMatrix.T, h[k,:].T))))
-    
-      pa = a1.T
+    # Iterative computation
+    for _ in range(1, p):
+        prev_a = a_all[-1]
+        h_new = safe_normalize(np.dot(adjMatrix, prev_a))
+        h_all = np.vstack((h_all, h_new.reshape(1, -1)))
         
-  for i in range(n):
-      authority[str(i)] = a[-1,i]
-      hub[str(i)] = h[-1,i]
+        a_new = safe_normalize(np.dot(adjMatrix.T, h_new))
+        a_all = np.vstack((a_all, a_new.reshape(1, -1)))
     
-  return hub, authority, h, a
+    # Final hub and authority scores (last iteration)
+    for i in range(n):
+        authority[str(i)] = a_all[-1, i]
+        hub[str(i)] = h_all[-1, i]
+    
+    return hub, authority, h_all, a_all
 
 
-def tophits(T, epsilon: float = 0.001):
+def tophits(T, epsilon: float = 0.001, max_iter: int = 1000):
     """
     Calculate the TOPHITS score for 3D tensor.
 
     Parameters
-	-------------------
-	T: a numpy array NxMxQ.
-	epsilon: float. Default 0.001. Stop criteria. If the labda value converge (|lambda(t-1) - labda(t)| < epsilon) stop the execution.
+    -------------------
+    T: a numpy array NxMxQ.
+    epsilon: float. Default 0.001. Stop criteria. If the labda value converge (|lambda(t-1) - labda(t)| < epsilon) stop the execution.
+    max_iter: int. Default 1000. Maximum number of iterations to prevent infinite loops.
 
-	Returns
-	-------------------
-	u, v, w: numpy array. The TOPHITS scores for each node about, respectively, the first, second and third dimension of tensor T.
+    Returns
+    -------------------
+    u, v, w: numpy array. The TOPHITS scores for each node about, respectively, the first, second and third dimension of tensor T.
 
-	Example
-	-------------------
-	>> import numpy as np
-	>> from influencer.centrality import tophits
+    Example
+    -------------------
+    >> import numpy as np
+    >> from influencer.centrality import tophits
 
-	Create a 3D tensor in numpy
+    Create a 3D tensor in numpy
 
-	>> ten = np.random.rand(10,5,20)
-	>> ten[ten>0.5]=1
-	>> ten[ten<=0.5]=0
-	>> d1, d2, d3 = tophits(T=ten)
+    >> ten = np.random.rand(10,5,20)
+    >> ten[ten>0.5]=1
+    >> ten[ten<=0.5]=0
+    >> d1, d2, d3 = tophits(T=ten)
     """
 
-    u, v, w = np.empty([1,T.shape[0]]), np.empty([1,T.shape[1]]), np.empty([1,T.shape[2]])
-    sigma = []
+    N, M, Q = T.shape
 
-    x = np.ones((T.shape[0], 1))
-    y = np.ones((T.shape[1], 1))
-    z = np.ones((T.shape[2], 1))
+    # Initialize vectors and normalize
+    u = np.ones(N)
+    v = np.ones(M)
+    w = np.ones(Q)
     
-    tx = np.squeeze(x)
-    ty = np.squeeze(y)
-    tz = np.squeeze(z)
+    u = u / np.linalg.norm(u)
+    v = v / np.linalg.norm(v)
+    w = w / np.linalg.norm(w)
     
-    lambda0=100
-    continua=True
-    num=1
+    lambda_prev = 0.0
     
-    while(continua):
-        x1 = np.tensordot(T,ty,axes=([1],[0]))
-        x = np.squeeze(np.tensordot(x1,tz,axes=([1],[0])))
+    for _ in range(max_iter):
+        # Update u
+        uv = np.tensordot(T, v, axes=([1], [0]))    # shape: (N, Q)
+        u_new = np.tensordot(uv, w, axes=([1], [0]))  # shape: (N,)
+        u_new = u_new / np.linalg.norm(u_new)
         
-        y1 = np.tensordot(T,x,axes=([0],[0]))
-        y = np.squeeze(np.tensordot(y1,tz,axes=([1], [0])))
+        # Update v
+        vt = np.tensordot(T, u_new, axes=([0], [0]))  # shape: (M, Q)
+        v_new = np.tensordot(vt, w, axes=([1], [0]))  # shape: (M,)
+        v_new = v_new / np.linalg.norm(v_new)
         
-        z1 = np.tensordot(T,x,axes=([0],[0]))
-        z = np.squeeze(np.tensordot(z1,y,axes=([0],[0])))
+        # Update w
+        wt = np.tensordot(T, u_new, axes=([0], [0]))  # shape: (M, Q)
+        w_new = np.tensordot(wt, v_new, axes=([0], [0]))  # shape: (Q,)
+        w_new = w_new / np.linalg.norm(w_new)
         
-        tx=x/np.linalg.norm(x)
-        ty=y/np.linalg.norm(y)
-        tz=z/np.linalg.norm(z)
+        # Check convergence
+        lambda_curr = (
+            np.linalg.norm(u_new) *
+            np.linalg.norm(v_new) *
+            np.linalg.norm(w_new)
+        )
         
-        lambda1 = np.linalg.norm(tx)*np.linalg.norm(ty)*np.linalg.norm(tz)
-        
-        if(abs(lambda1-lambda0) < epsilon):
-            continua=False
-        
-        lambda0 = lambda1
-        num = num+1
-    
-    u = np.vstack((u,tx))
-    v = np.vstack((v,ty))
-    w = np.vstack((w,tz))
-    
-    sigma.append(lambda1)
-    
-    u = u[1:,:]
-    v = v[1:,:]
-    w = w[1:,:]
+        if abs(lambda_curr - lambda_prev) < epsilon:
+            break
+            
+        lambda_prev = lambda_curr
+        u, v, w = u_new, v_new, w_new
 
-    return u, v, w
+    return u.reshape(1, -1), v.reshape(1, -1), w.reshape(1, -1)
 
 
 def socialAU(mu, mi, mw, T, epsilon: float = 0.001):
-  """
-  Calculate the socialAU score in a 3 layer net and detect the influencer. For more information consult the README.
+    """
+    Calculate the socialAU score in a 3 layer net and detect the influencer. 
+    Corrected implementation following the paper's pseudocode exactly.
 
-  Parameters
-  -------------------
-  mu, mi, mw: numpy array. These are 3 adjiacency matrix with dimension NxN, MxM, QxQ.
-  T: numpy array. A 3D tensor with dimension NxMxQ.
-  epsilon: float. Default 0.001. Stop criteria. If the labda value converge (|lambda(t-1) - labda(t)| < epsilon) stop the execution.
-  
-  Returns
-  -------------------
-  u, v, w: numpy array. The socialAU scores for each node about, respectively, the first, second and third dimension of tensor (3 social networks).
-
-  Example
-  -------------------
-  >> import numpy as np
-  >> from influencer.centrality import socialAU
-
-  Create 3 adjiacency matrix
-  >> userNet = np.random.rand(10, 10)
-  >> userNet[userNet>0.5]=1
-  >> userNet[userNet<=0.5]=0
-  >> itemNet = np.random.rand(5, 5)
-  >> itemNet[itemNet>0.5]=1
-  >> itemNet[itemNet<=0.5]=0
-  >> wordNet = np.random.rand(20, 20)
-  >> wordNet[wordNet>0.5]=1
-  >> wordNet[wordNet<=0.5]=0
-
-  Create a 3D tensor in numpy
-
-  >> ten = np.random.rand(10,5,20)
-  >> ten[ten>0.5]=1
-  >> ten[ten<=0.5]=0
-
-  >> user, item, word = socialAU(userNet, itemNet, wordNet,ten)
-  """
-
-  u, v, w = np.empty([1,T.shape[0]]), np.empty([1,T.shape[1]]), np.empty([1,T.shape[2]])
+    Parameters
+    -------------------
+    mu, mi, mw: numpy array. These are 3 adjiacency matrix with dimension NxN, MxM, QxQ.
+    T: numpy array. A 3D tensor with dimension NxMxQ.
+    epsilon: float. Default 0.001. Stop criteria. If the labda value converge (|lambda(t-1) - labda(t)| < epsilon) stop the execution.
     
-  x=np.ones((T.shape[0],1))
-  y=np.ones((T.shape[1],1))
-  z=np.ones((T.shape[2],1))
+    Returns
+    -------------------
+    u, v, w: numpy array. The socialAU scores for each node about, respectively, the first, second and third dimension of tensor (3 social networks).
 
-  tx = np.squeeze(x)
-  ty = np.squeeze(y)
-  tz = np.squeeze(z)
+    Example
+    -------------------
+    >> import numpy as np
+    >> from influencer.centrality import socialAU
 
-  lambda0=10
-  continua=True
+    Create 3 adjiacency matrix
+    >> userNet = np.random.rand(10, 10)
+    >> userNet[userNet>0.5]=1
+    >> userNet[userNet<=0.5]=0
+    >> itemNet = np.random.rand(5, 5)
+    >> itemNet[itemNet>0.5]=1
+    >> itemNet[itemNet<=0.5]=0
+    >> wordNet = np.random.rand(20, 20)
+    >> wordNet[wordNet>0.5]=1
+    >> wordNet[wordNet<=0.5]=0
+
+    Create a 3D tensor in numpy
+
+    >> ten = np.random.rand(10,5,20)
+    >> ten[ten>0.5]=1
+    >> ten[ten<=0.5]=0
+
+    >> user, item, word = socialAU(userNet, itemNet, wordNet,ten)
+    """
+
+    # Initialize vectors to unit vectors (step 1 of pseudocode)
+    n, m, r = T.shape[0], T.shape[1], T.shape[2]
     
-  ##########################
-  # user
-  #nU=mu.shape[0]
-  aU=np.ones([1,mu.shape[0]])
-  hU=np.ones([1,mu.shape[0]])
-  paU=aU
-  phU=hU
-  #########################
-  # item
-  #nI=mi.shape[0]
-  aI=np.ones([1,mi.shape[0]])
-  hI=np.ones([1,mi.shape[0]])
-  paI=aI
-  phI=hI
-  #########################
-  # word
-  # nW=mw.shape[0]
-  aW=np.ones([1,mw.shape[0]])
-  hW=np.ones([1,mw.shape[0]])
-  paW=aW
-  phW=hW
-  #########################
-  num=1
-  k=1
+    # For users layer
+    a_U = np.ones(n)
+    h_U = np.ones(n)
     
-  while (continua):
+    # For items layer  
+    a_I = np.ones(m)
+    h_I = np.ones(m)
+    
+    # For keywords layer
+    a_k = np.ones(r)
+    h_k = np.ones(r)
+    
+    # For tensor decomposition
+    h = np.ones(n)  # users (first dimension)
+    a = np.ones(m)  # items (second dimension)  
+    w = np.ones(r)  # keywords (third dimension)
+    
+    # Initialize lambda (step 2)
+    lambda_prev = 0
+    
+    # Main iteration loop (step 3)
+    continua = True
+    
+    while continua:
+        # Step 4-5: HITS for users layer
+        h_U = np.dot(mu, a_U)
+        a_U = np.dot(mu.T, h_U)
         
-      # user
-      h1U = np.dot(mu, paU.T)/np.linalg.norm(np.dot(mu, paU.T))
-      a1U = np.dot(mu.T, h1U)/np.linalg.norm(np.dot(mu.T , h1U))
-      hU = np.vstack((hU,np.dot(mu, aU[k-1,:].T)/np.linalg.norm(np.dot(mu, aU[k-1,:].T))))
-      aU = np.vstack((aU,np.dot(mu.T, hU[k,:].T)/np.linalg.norm(np.dot(mu.T, hU[k,:].T))))
-      paU = a1U.T
-      phU = h1U.T
+        # Step 6-7: HITS for items layer  
+        h_I = np.dot(mi, a_I)
+        a_I = np.dot(mi.T, h_I)
         
-      # item
-      h1I = np.dot(mi, paI.T)/np.linalg.norm(np.dot(mi, paI.T))
-      a1I = np.dot(mi.T, h1I)/np.linalg.norm(np.dot(mi.T , h1I))
-      hI = np.vstack((hI,np.dot(mi, aI[k-1,:].T)/np.linalg.norm(np.dot(mi, aI[k-1,:].T))))
-      aI = np.vstack((aI,np.dot(mi.T, hI[k,:].T)/np.linalg.norm(np.dot(mi.T, hI[k,:].T))))
-      paI = a1I.T
-      phI = h1I.T
+        # Step 8-9: HITS for keywords layer
+        h_k = np.dot(mw, a_k) 
+        a_k = np.dot(mw.T, h_k)
         
-      # word
-      h1W = np.dot(mw, paW.T)/np.linalg.norm(np.dot(mw, paW.T))
-      a1W = np.dot(mw.T, h1W)/np.linalg.norm(np.dot(mw.T , h1W))
-      hW = np.vstack((hW,np.dot(mw, aW[k-1,:].T)/np.linalg.norm(np.dot(mw, aW[k-1,:].T))))
-      aW = np.vstack((aW,np.dot(mw.T, hW[k,:].T)/np.linalg.norm(np.dot(mw.T, hW[k,:].T))))
-      paW = a1W.T
-      phW = h1W.T
+        # Step 10: Update h using tensor operations + HITS scores
+        # h^(t+1) = A ×₂ a^(t) ×₃ w^(t) + h_U^(t+1) + a_U^(t+1)
+        tensor_part = np.tensordot(T, a, axes=([1], [0]))  # Contract dimension 1 with items
+        tensor_part = np.tensordot(tensor_part, w, axes=([1], [0]))  # Contract dimension 1 with keywords
+        h = tensor_part + h_U + a_U
         
-      x1 = np.tensordot(T,ty,axes=([1],[0]))
-      x = np.squeeze(np.tensordot(x1,tz,axes=([1],[0])))
-    
-      y1 = np.tensordot(T,x,axes=([0],[0]))
-      y = np.squeeze(np.tensordot(y1,tz,axes=([1], [0])))
-    
-      z1 = np.tensordot(T,x,axes=([0],[0]))
-      z = np.squeeze(np.tensordot(z1,y,axes=([0],[0])))
+        # Step 11: Update a using tensor operations
+        # a^(t+1) = A ×₁ h^(t+1) ×₃ w^(t)
+        tensor_part = np.tensordot(T, h, axes=([0], [0]))  # Contract dimension 0 with users
+        a = np.tensordot(tensor_part, w, axes=([1], [0]))  # Contract dimension 1 with keywords
         
-      # user
-      h2U=hU[k,:]
-      a2U=aU[k,:]
-      SNP=(h2U+a2U)
-      SNP=np.squeeze(SNP.T)
-    
-      # item
-      a2I=aI[k,:]
-      a2I=np.squeeze(a2I.T)
-    
-      # word
-      a2W=aW[k,:]
-      a2W=np.squeeze(a2W.T)
+        # Step 12: Update w using tensor operations + HITS scores
+        # w^(t+1) = A ×₁ h^(t+1) ×₂ a^(t) + a_k^(t+1)
+        tensor_part = np.tensordot(T, h, axes=([0], [0]))  # Contract dimension 0 with users
+        tensor_part = np.tensordot(tensor_part, a, axes=([0], [0]))  # Contract dimension 0 with items
+        w = tensor_part + a_k
         
-      #################################
-      txx=(x/np.linalg.norm(x))+SNP
-      tx=txx/np.linalg.norm(txx)
-    
-      tyy=(y/np.linalg.norm(y))+a2I
-      ty=tyy/np.linalg.norm(tyy)
-    
-      tzz=(z/np.linalg.norm(z))+a2W
-      tz=tzz/np.linalg.norm(tzz)
-      ################################
+        # Step 13: Calculate lambda = ||h|| ||a|| ||w||
+        lambda_current = np.linalg.norm(h) * np.linalg.norm(a) * np.linalg.norm(w)
         
-      lambda1 = np.linalg.norm(tx)*np.linalg.norm(ty)*np.linalg.norm(tz)
+        # Step 14: Normalize all vectors
+        h = h / np.linalg.norm(h)
+        a = a / np.linalg.norm(a) 
+        w = w / np.linalg.norm(w)
         
-      if(abs(lambda1-lambda0) < epsilon):
-          continua=False
-            
-      lambda0 = lambda1
-      num+=1
-      k+=1
+        # Normalize HITS vectors for next iteration
+        a_U = a_U / np.linalg.norm(a_U)
+        h_U = h_U / np.linalg.norm(h_U)
+        a_I = a_I / np.linalg.norm(a_I)
+        h_I = h_I / np.linalg.norm(h_I)
+        a_k = a_k / np.linalg.norm(a_k)
+        h_k = h_k / np.linalg.norm(h_k)
+        
+        # Step 15-16: Check convergence
+        if abs(lambda_current - lambda_prev) <= epsilon:
+            continua = False
+        else:
+            lambda_prev = lambda_current
     
-  u = np.vstack((u,tx))
-  v = np.vstack((v,ty))
-  w = np.vstack((w,tz))
+    # Step 19: Return results
+    # Reshape to match original function's output format
+    u = h.reshape(1, -1)  # users scores
+    v = a.reshape(1, -1)  # items scores  
+    w_out = w.reshape(1, -1)  # keywords scores
     
-  u = u[1:,:]
-  v = v[1:,:]
-  w = w[1:,:]
-    
-  return u, v, w
+    return u, v, w_out
