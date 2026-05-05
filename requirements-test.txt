@@ -2,7 +2,7 @@
 -r requirements.txt
 
 # Testing framework
-pytest>=7.0.0,<8.0.0
+pytest>=9.0.3
 
 # Test coverage
 pytest-cov>=4.0.0,<5.0.0
