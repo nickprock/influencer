@@ -8,7 +8,7 @@ setup(
    license="LICENSE.txt",
    long_description=open('README.md').read(),
    author='Nicola Procopio',
-   url="https://github.com/nickprock/",
+   url="https://github.com/nickprock/influencer",
    packages=['influencer'],  #same as name
    # install_requires=['numpy', 'jax', 'torch'],
    install_requires=['numpy', 'torch'], #external packages as dependencies
