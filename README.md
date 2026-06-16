@@ -35,7 +35,7 @@ This package provides a PyTorch-based implementation of the **SocialAU** algorit
 2. Using terminal go into the folder with setup.py
 3. Run the following command:
 ```bash
-python setup.py install
+pip install .
 ```
 4. Test the installation:
 ```python
@@ -70,6 +70,31 @@ The package includes the following centrality measures:
 * **SocialAU**: Multi-layer network approach for topic-authoritative user detection
 * **[HITS and TOPHITS](https://en.wikipedia.org/wiki/HITS_algorithm)**: Hub and Authority scoring algorithms
 
+## Demo & Examples
+
+The `demo/` folder contains runnable examples that cover every algorithm in the package:
+
+| File | Type | Description |
+|------|------|-------------|
+| `01_quick_start.py` | Script | Package overview: `edge2adj`, `hits`, `tophits`, `socialAU` in under 30 lines |
+| `02_hits_social_graph.py` | Script | HITS on a Twitter-like retweet graph — ranked authority/hub tables with assertions |
+| `03_tophits_tensor.py` | Script | TOPHITS on a structured rank-2 tensor; validates dominant-component recovery and shows early stopping |
+| `04_socialau_pipeline.py` | Script | Full SocialAU pipeline on a synthetic product-review platform (5 users × 4 products × 6 keywords) |
+| `05_twitter_scenario.ipynb` | Notebook | "AI in healthcare" Twitter simulation: SocialAU vs TOPHITS comparison with bar charts |
+| `06_tophits_vs_socialau.ipynb` | Notebook | Systematic comparison — theory, ranking-flip case study, convergence plots, Spearman correlation |
+| `07_benchmark.py` | Script | Wall-clock benchmark across four network sizes up to (500 × 400 × 600) |
+
+Run any script directly:
+```bash
+python demo/01_quick_start.py
+python demo/07_benchmark.py
+```
+
+Open notebooks with Jupyter:
+```bash
+jupyter notebook demo/05_twitter_scenario.ipynb
+```
+
 ## Performance
 
 The PyTorch implementation provides excellent performance characteristics:
@@ -77,9 +102,16 @@ The PyTorch implementation provides excellent performance characteristics:
 - **Memory efficiency**: Optimized tensor operations
 - **Cross-platform compatibility**: Works on Windows, Linux, and macOS
 
-For detailed performance comparisons between different implementations (JAX, NumPy, PyTorch), refer to the `experimental` branch and the [Google Colab notebook](https://colab.research.google.com/drive/1q4hpkp1Wqb7qEZIY6_EgHBaOt5E3zp6i?usp=sharing).
+Benchmark results on CPU (random sparse tensors, density=0.01):
 
-Additional tests and examples are available in the [notebook directory](https://github.com/nickprock/influencer/tree/master/notebook).
+| n   | m   | r   | TOPHITS (s) | SocialAU (s) |
+|-----|-----|-----|-------------|--------------|
+| 10  | 8   | 12  | < 0.01      | < 0.01       |
+| 50  | 40  | 60  | < 0.01      | < 0.01       |
+| 200 | 150 | 250 | 0.02        | < 0.01       |
+| 500 | 400 | 600 | 0.40        | 0.12         |
+
+For detailed performance comparisons between different implementations (JAX, NumPy, PyTorch), refer to the `experimental` branch and the [Google Colab notebook](https://colab.research.google.com/drive/1q4hpkp1Wqb7qEZIY6_EgHBaOt5E3zp6i?usp=sharing).
 
 ## Testing
 
