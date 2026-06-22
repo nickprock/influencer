@@ -13,6 +13,24 @@ def safe_normalize(vec: torch.Tensor) -> torch.Tensor:
     return vec / norm if norm > 0 else torch.zeros_like(vec)
 
 
+def _resolve_init(
+    init: "torch.Tensor | None", size: int, device: torch.device, name: str
+) -> torch.Tensor:
+    """
+    Resolve one of `socialAU`'s optional h_init/a_init/w_init arguments.
+
+    Falls back to `torch.ones` (the original, no-prior behaviour) when
+    `init` is None. Otherwise validates its shape and applies
+    `safe_normalize`, so a supplied prior starts on equal footing with the
+    all-ones default.
+    """
+    if init is None:
+        return torch.ones(size, device=device)
+    if tuple(init.shape) != (size,):
+        raise ValueError(f"{name} must have shape ({size},), got {tuple(init.shape)}")
+    return safe_normalize(init.to(device=device, dtype=torch.float32))
+
+
 def hits(adjMatrix: torch.Tensor, p: int = 100, device=0):
     """
     Compute HITS (Hub and Authority) scores on a graph represented by an adjacency matrix.
@@ -135,7 +153,14 @@ def tophits(T: torch.Tensor, epsilon: float = 1e-3, max_iter: int = 1000, device
     return u, v, w
 
 
-def socialAU(mu, mi, mw, T, epsilon: float = 0.001, device=0):
+def socialAU(
+    mu, mi, mw, T,
+    epsilon: float = 0.001,
+    device=0,
+    h_init: "torch.Tensor | None" = None,
+    a_init: "torch.Tensor | None" = None,
+    w_init: "torch.Tensor | None" = None,
+):
     """
     Calculate the socialAU score in a 3 layer net and detect the influencer.
 
@@ -146,6 +171,13 @@ def socialAU(mu, mi, mw, T, epsilon: float = 0.001, device=0):
     epsilon: float. Default 0.001. Stop criteria. Algorithm stops when
         lambda(t) - lambda(t-1) <= epsilon (paper step 15).
     device: Default 0. Set the GPU. If GPU is not available it is set to "cpu" automatically.
+    h_init, a_init, w_init: optional torch tensor of shape (n,), (m,), (r,)
+        respectively. Default None, which reproduces the original
+        all-ones initialisation. When provided, used instead of
+        `torch.ones` to seed h, a, w and normalised via `safe_normalize`
+        before the first iteration, so content-based embeddings can serve
+        as a warm-start prior for nodes with little or no graph
+        connectivity. Raises ValueError on a shape mismatch.
 
     Returns
     -------------------
@@ -174,9 +206,9 @@ def socialAU(mu, mi, mw, T, epsilon: float = 0.001, device=0):
     a_k = torch.ones(r, device=device)
     h_k = torch.ones(r, device=device)
 
-    h = torch.ones(n, device=device)
-    a = torch.ones(m, device=device)
-    w = torch.ones(r, device=device)
+    h = _resolve_init(h_init, n, device, "h_init")
+    a = _resolve_init(a_init, m, device, "a_init")
+    w = _resolve_init(w_init, r, device, "w_init")
 
     # Step 2: initialise lambda
     lambda_prev = 0.0
